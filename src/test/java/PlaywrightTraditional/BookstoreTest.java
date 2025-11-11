@@ -18,10 +18,14 @@ public class BookstoreTest {
     @BeforeEach
     void setup() {
         playwright = Playwright.create();
+        boolean isCI = System.getenv("CI") != null;
+
         browser = playwright.chromium().launch(
                 new BrowserType.LaunchOptions()
-                        .setHeadless(false)
+                        .setHeadless(isCI)
         );
+
+
         // Video recording
         context = browser.newContext(
                 new Browser.NewContextOptions()
