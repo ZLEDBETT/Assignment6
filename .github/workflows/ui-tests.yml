@@ -1,31 +1,59 @@
-name: UI Tests
+name: UI tests
 
 on:
   push:
     branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   test:
+  
     runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright/java:v1.49.0-noble
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Check out
+        uses: actions/checkout@v4
 
-    - name: Set up Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: temurin
-        java-version: 17
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'  # or your JDK version
 
-    - name: Cache Maven dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          ${{ runner.os }}-maven-
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
 
-    - name: Build and run tests
-      run: mvn -B test
+    
+      - name: Install Playwright browsers (+deps)
+        run: |
+          mvn -q -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps" exec:java
+
+      - name: Run tests (headless)
+        env:
+         
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          mvn -B -q test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/**
+
+      - name: Upload recorded videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-videos
+          path: |
+            videos/**
+            **/videos/**
