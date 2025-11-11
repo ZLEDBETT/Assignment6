@@ -2,8 +2,7 @@ name: UI Tests
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
 
 jobs:
@@ -20,7 +19,7 @@ jobs:
         distribution: temurin
         java-version: 17
 
-    - name: Set up Maven cache
+    - name: Cache Maven dependencies
       uses: actions/cache@v3
       with:
         path: ~/.m2/repository
@@ -28,8 +27,5 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-maven-
 
-    - name: Install Playwright Browsers
-      run: mvn playwright:install
-
-    - name: Run UI Tests
-      run: mvn test
+    - name: Build and run tests
+      run: mvn -B test
